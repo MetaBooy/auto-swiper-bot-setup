@@ -26,7 +26,8 @@ Check versions:
 npm -v
 ```
 # 📁 3. Create Project Directory
-```mkdir auto-swiper-bot
+```
+mkdir auto-swiper-bot
 cd auto-swiper-bot
 ```
 # 📝 4. Create .env File
