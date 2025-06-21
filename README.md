@@ -1,0 +1,1 @@
+# auto-swiper-bot-setup
