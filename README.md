@@ -62,58 +62,65 @@ nano bot.js
 require("dotenv").config();
 const { ethers } = require("ethers");
 
-const { PRIV_KEY, TO_ADDRESS, RPC_URL } = process.env;
+const TO_ADDRESS = process.env.TO_ADDRESS;
+const WALLETS = process.env.WALLETS?.split(",");
 
-if (!PRIV_KEY  !TO_ADDRESS  !RPC_URL) {
-  console.error("Missing environment variables. Check your .env file.");
+const RPCs = {
+  sepolia: process.env.SEPOLIA_RPC,
+  base: process.env.BASE_RPC,
+};
+
+if (!TO_ADDRESS || !WALLETS || Object.values(RPCs).some(r => !r)) {
+  console.error("❌ Missing environment variables");
   process.exit(1);
 }
 
-const provider = new ethers.JsonRpcProvider(RPC_URL);
-const wallet = new ethers.Wallet(PRIV_KEY, provider);
+const gasLimit = 21000n;
 
-async function swipe() {
+async function swipeAll(wallet, provider, chainName, walletIndex) {
   try {
     const balance = await provider.getBalance(wallet.address);
-    const gasLimit = 21000n;
-
-    // Use fee data for Ethers v6 (replacement for getGasPrice)
     const feeData = await provider.getFeeData();
-    const gasPrice = feeData.gasPrice;
 
+    const gasPrice = feeData.gasPrice;
     if (!gasPrice) {
-      console.error("❌ Failed to get gas price.");
+      console.log(`❌ [${chainName}] Gas price unavailable`);
       return;
     }
 
     const fee = gasPrice * gasLimit;
-
     if (balance <= fee) {
-      console.log("💤 Not enough ETH to cover gas.");
+      console.log(`💤 [${chainName}] Wallet ${walletIndex} has insufficient ETH.`);
       return;
     }
 
-    const amountToSend = balance - fee;
-
+    const value = balance - fee;
     const tx = await wallet.sendTransaction({
       to: TO_ADDRESS,
-      value: amountToSend,
+      value,
       gasLimit,
       maxFeePerGas: gasPrice,
       maxPriorityFeePerGas: gasPrice,
     });
 
-    console.log(🚀 Sent ALL ETH in tx: ${tx.hash});
+    console.log(`🚀 [${chainName}] Wallet ${walletIndex}: Sent all ETH in tx: ${tx.hash}`);
     await tx.wait();
-    console.log("✅ Transaction confirmed.");
+    console.log(`✅ [${chainName}] Wallet ${walletIndex}: Confirmed.`);
   } catch (error) {
-    console.error("❌ Swipe failed:", error.message);
+    console.error(`❌ [${chainName}] Wallet ${walletIndex}: ${error.message}`);
   }
 }
 
-console.log("🤖 Auto Swiper Bot started on Sepolia...");
+Object.entries(RPCs).forEach(([chainName, rpcUrl]) => {
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-setInterval(swipe, 1000); // Every second
+  WALLETS.forEach((privKey, index) => {
+    const wallet = new ethers.Wallet(privKey, provider);
+    setInterval(() => swipeAll(wallet, provider, chainName, index + 1), 1000);
+  });
+});
+
+console.log("🤖 Multi-Wallet & Multi-Chain Auto Swiper Bot started...");
 ```
 Then save (Ctrl + O, Enter, Ctrl + X).
 
