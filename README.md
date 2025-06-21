@@ -59,68 +59,7 @@ nano bot.js
 ```
 **Paste this script:**
 ```
-require("dotenv").config();
-const { ethers } = require("ethers");
-
-const TO_ADDRESS = process.env.TO_ADDRESS;
-const WALLETS = process.env.WALLETS?.split(",");
-
-const RPCs = {
-  sepolia: process.env.SEPOLIA_RPC,
-  base: process.env.BASE_RPC,
-};
-
-if (!TO_ADDRESS || !WALLETS || Object.values(RPCs).some(r => !r)) {
-  console.error("❌ Missing environment variables");
-  process.exit(1);
-}
-
-const gasLimit = 21000n;
-
-async function swipeAll(wallet, provider, chainName, walletIndex) {
-  try {
-    const balance = await provider.getBalance(wallet.address);
-    const feeData = await provider.getFeeData();
-
-    const gasPrice = feeData.gasPrice;
-    if (!gasPrice) {
-      console.log(`❌ [${chainName}] Gas price unavailable`);
-      return;
-    }
-
-    const fee = gasPrice * gasLimit;
-    if (balance <= fee) {
-      console.log(`💤 [${chainName}] Wallet ${walletIndex} has insufficient ETH.`);
-      return;
-    }
-
-    const value = balance - fee;
-    const tx = await wallet.sendTransaction({
-      to: TO_ADDRESS,
-      value,
-      gasLimit,
-      maxFeePerGas: gasPrice,
-      maxPriorityFeePerGas: gasPrice,
-    });
-
-    console.log(`🚀 [${chainName}] Wallet ${walletIndex}: Sent all ETH in tx: ${tx.hash}`);
-    await tx.wait();
-    console.log(`✅ [${chainName}] Wallet ${walletIndex}: Confirmed.`);
-  } catch (error) {
-    console.error(`❌ [${chainName}] Wallet ${walletIndex}: ${error.message}`);
-  }
-}
-
-Object.entries(RPCs).forEach(([chainName, rpcUrl]) => {
-  const provider = new ethers.JsonRpcProvider(rpcUrl);
-
-  WALLETS.forEach((privKey, index) => {
-    const wallet = new ethers.Wallet(privKey, provider);
-    setInterval(() => swipeAll(wallet, provider, chainName, index + 1), 1000);
-  });
-});
-
-console.log("🤖 Multi-Wallet & Multi-Chain Auto Swiper Bot started...");
+node bot.js
 ```
 Then save (Ctrl + O, Enter, Ctrl + X).
 
