@@ -18,11 +18,13 @@ Keep it alive using PM2
 From your local terminal:
 
 # ⚙️ 2. Install Node.js and npm
-```sudo apt update
+```
+sudo apt update
 sudo apt install -y nodejs npm
 ```
 Check versions:
-```node -v
+```
+node -v
 npm -v
 ```
 # 📁 3. Create Project Directory
@@ -35,7 +37,8 @@ cd auto-swiper-bot
 nano .env
 ```
 Paste this:
-```TO_ADDRESS=0xYourReceivingAddress
+```
+TO_ADDRESS=0xYourReceivingAddress
 
 SEPOLIA_RPC=https://rpc.sepolia.org
 BASE_SEPOLIA_RPC=https://sepolia.base.org
@@ -51,10 +54,12 @@ Save with:
 **Ctrl + X → Exit**
 
 ## 📝 5. Create bot.js File
-```nano bot.js
+```
+nano bot.js
 ```
 **Paste this script:**
-```require("dotenv").config();
+```
+require("dotenv").config();
 const { ethers } = require("ethers");
 
 const { PRIV_KEY, TO_ADDRESS, RPC_URL } = process.env;
