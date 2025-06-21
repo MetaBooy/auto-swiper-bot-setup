@@ -31,7 +31,8 @@ mkdir auto-swiper-bot
 cd auto-swiper-bot
 ```
 # 📝 4. Create .env File
-```nano .env
+```
+nano .env
 ```
 Paste this:
 ```TO_ADDRESS=0xYourReceivingAddress
