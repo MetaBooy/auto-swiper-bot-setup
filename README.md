@@ -118,14 +118,17 @@ setInterval(swipe, 1000); // Every second
 Then save (Ctrl + O, Enter, Ctrl + X).
 
 # 📦 6. Initialize Project and Install Dependencies
-```npm init -y
+```
+npm init -y
 npm install dotenv ethers
 ```
 # ▶️ 7. Run the Bot
-``node bot.js
+``
+node bot.js
 ```
 # 🛡️ 8. (Optional) Keep It Alive with PM2
-```sudo npm install -g pm2
+```
+sudo npm install -g pm2
 pm2 start bot.js --name swiper-bot
 pm2 save
 pm2 startup
