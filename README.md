@@ -123,7 +123,7 @@ npm init -y
 npm install dotenv ethers
 ```
 # ▶️ 7. Run the Bot
-``
+```
 node bot.js
 ```
 # 🛡️ 8. (Optional) Keep It Alive with PM2
