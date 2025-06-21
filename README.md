@@ -123,10 +123,12 @@ npm init -y
 npm install dotenv ethers
 ```
 # create screen 
-```sudo apt update && sudo apt install screen -y
+```
+sudo apt update && sudo apt install screen -y
 ```
 then 
-```screen -S swiper
+```
+screen -S swiper
 ```
 
 
