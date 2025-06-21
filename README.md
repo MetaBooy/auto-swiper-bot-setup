@@ -59,65 +59,61 @@ nano bot.js
 ```
 **Paste this script:**
 ```
-async function swipe(wallet) {
-    try {
-        const balance = await wallet.getBalance();
-        console.log(`💰 Wallet ${wallet.address} balance: ${ethers.formatEther(balance)} ETH`);
+require("dotenv").config();
+const { ethers } = require("ethers");
 
-        if (balance.eq(0)) {
-            console.log(`⛔ Skipping ${wallet.address}: balance is 0`);
-            return;
-        }
+const { PRIV_KEY, TO_ADDRESS, RPC_URL } = process.env;
 
-        const network = await wallet.provider.getNetwork();
-        let tx;
-        const estimatedGas = 21000;
-
-        if (network.chainId === 8453) { // Base mainnet
-            const feeData = await wallet.provider.getFeeData();
-            const txCost = feeData.maxFeePerGas.mul(estimatedGas);
-
-            if (balance.lte(txCost)) {
-                console.log(`❌ Not enough balance to cover Base gas for ${wallet.address}`);
-                return;
-            }
-
-            const amount = balance.sub(txCost);
-
-            tx = await wallet.sendTransaction({
-                to: TO_ADDRESS,
-                value: amount,
-                type: 2, // EIP-1559
-                maxFeePerGas: feeData.maxFeePerGas,
-                maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
-                gasLimit: estimatedGas,
-            });
-        } else {
-            const gasPrice = await wallet.provider.getGasPrice();
-            const txCost = gasPrice.mul(estimatedGas);
-
-            if (balance.lte(txCost)) {
-                console.log(`❌ Not enough balance to cover Sepolia gas for ${wallet.address}`);
-                return;
-            }
-
-            const amount = balance.sub(txCost);
-
-            tx = await wallet.sendTransaction({
-                to: TO_ADDRESS,
-                value: amount,
-                gasPrice,
-                gasLimit: estimatedGas,
-            });
-        }
-
-        console.log(`✅ Swiped ${ethers.formatEther(tx.value)} ETH from ${wallet.address}`);
-        console.log(`🔗 TX: ${tx.hash}`);
-    } catch (err) {
-        console.error(`🔥 Error swiping ${wallet.address}:`, err.message);
-    }
+if (!PRIV_KEY || !TO_ADDRESS || !RPC_URL) {
+  console.error("Missing environment variables. Check your .env file.");
+  process.exit(1);
 }
 
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+const wallet = new ethers.Wallet(PRIV_KEY, provider);
+
+async function swipe() {
+  try {
+    const balance = await provider.getBalance(wallet.address);
+    const gasLimit = 21000n;
+
+    // Use fee data for Ethers v6 (replacement for getGasPrice)
+    const feeData = await provider.getFeeData();
+    const gasPrice = feeData.gasPrice;
+
+    if (!gasPrice) {
+      console.error("❌ Failed to get gas price.");
+      return;
+    }
+
+    const fee = gasPrice * gasLimit;
+
+    if (balance <= fee) {
+      console.log("💤 Not enough ETH to cover gas.");
+      return;
+    }
+
+    const amountToSend = balance - fee;
+
+    const tx = await wallet.sendTransaction({
+      to: TO_ADDRESS,
+      value: amountToSend,
+      gasLimit,
+      maxFeePerGas: gasPrice,
+      maxPriorityFeePerGas: gasPrice,
+    });
+
+    console.log(`🚀 Sent ALL ETH in tx: ${tx.hash}`);
+    await tx.wait();
+    console.log("✅ Transaction confirmed.");
+  } catch (error) {
+    console.error("❌ Swipe failed:", error.message);
+  }
+}
+
+console.log("🤖 Auto Swiper Bot started on Sepolia...");
+
+setInterval(swipe, 1000); // Every second
 ```
 Then save (Ctrl + O, Enter, Ctrl + X).
 
